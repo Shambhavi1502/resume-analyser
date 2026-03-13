@@ -1,0 +1,140 @@
+{
+  "job_roles": {
+    "software_engineer": {
+      "required_skills": [
+        "Python",
+        "JavaScript",
+        "Java",
+        "Git",
+        "REST API",
+        "SQL",
+        "HTML",
+        "CSS",
+        "React",
+        "Node.js",
+        "Docker",
+        "AWS"
+      ],
+      "nice_to_have": [
+        "Kubernetes",
+        "Microservices",
+        "GraphQL",
+        "MongoDB",
+        "CI/CD",
+        "Jenkins"
+      ]
+    },
+    "data_scientist": {
+      "required_skills": [
+        "Python",
+        "R",
+        "Machine Learning",
+        "Data Analysis",
+        "Pandas",
+        "NumPy",
+        "Scikit-learn",
+        "SQL",
+        "Statistics",
+        "Data Visualization"
+      ],
+      "nice_to_have": [
+        "TensorFlow",
+        "PyTorch",
+        "Spark",
+        "Tableau",
+        "Deep Learning",
+        "NLP"
+      ]
+    },
+    "frontend_developer": {
+      "required_skills": [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "React",
+        "Vue.js",
+        "Git",
+        "REST API",
+        "Responsive Design",
+        "Web Design",
+        "DOM"
+      ],
+      "nice_to_have": [
+        "TypeScript",
+        "Angular",
+        "Redux",
+        "Webpack",
+        "Testing",
+        "SASS"
+      ]
+    },
+    "backend_developer": {
+      "required_skills": [
+        "Python",
+        "Java",
+        "Node.js",
+        "SQL",
+        "REST API",
+        "Database Design",
+        "Git",
+        "Linux",
+        "Docker",
+        "Authentication"
+      ],
+      "nice_to_have": [
+        "Microservices",
+        "Message Queues",
+        "Redis",
+        "MongoDB",
+        "Kubernetes",
+        "GraphQL"
+      ]
+    }
+  },
+  "technical_skills": {
+    "programming_languages": [
+      "Python",
+      "Java",
+      "JavaScript",
+      "C++",
+      "C#",
+      "Go",
+      "Rust",
+      "PHP",
+      "Ruby",
+      "R"
+    ],
+    "frameworks": [
+      "React",
+      "Vue.js",
+      "Angular",
+      "Django",
+      "Flask",
+      "Spring",
+      "Node.js",
+      "Express",
+      "FastAPI",
+      ".NET"
+    ],
+    "databases": [
+      "SQL",
+      "MySQL",
+      "PostgreSQL",
+      "MongoDB",
+      "Redis",
+      "Cassandra",
+      "Oracle",
+      "DynamoDB"
+    ],
+    "devops_tools": [
+      "Docker",
+      "Kubernetes",
+      "AWS",
+      "Azure",
+      "GCP",
+      "Jenkins",
+      "GitLab CI",
+      "GitHub Actions"
+    ]
+  }
+}
