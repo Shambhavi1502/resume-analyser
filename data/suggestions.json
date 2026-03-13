@@ -1,0 +1,23 @@
+{
+  "Python": "Learn Python by taking online courses from Coursera, Udemy, or freeCodeCamp. Focus on algorithms, data structures, and libraries like NumPy and Pandas.",
+  "JavaScript": "Master JavaScript fundamentals, ES6+ features, and asynchronous programming. Build projects to practice DOM manipulation and event handling.",
+  "Java": "Study Java OOP concepts, Collections Framework, and Spring Boot. Complete coding challenges on LeetCode and HackerRank to strengthen skills.",
+  "React": "Build practical React applications. Learn state management with Redux, routing with React Router, and hooks for functional components.",
+  "Docker": "Learn containerization with Docker. Practice creating Dockerfiles, managing images, and working with Docker Compose for multi-container applications.",
+  "AWS": "Explore AWS services through free tier. Focus on EC2, S3, RDS, and Lambda. Get AWS certified to validate your knowledge.",
+  "Git": "Master Git version control. Practice branching, merging, and collaborative workflows. Use GitHub for personal projects.",
+  "REST API": "Design RESTful APIs following best practices. Learn about HTTP methods, status codes, and API documentation with Swagger/OpenAPI.",
+  "SQL": "Strengthen SQL skills by writing complex queries, understanding indexes, and optimizing performance. Practice with sample databases.",
+  "Data Analysis": "Use tools like Python (Pandas, Matplotlib) or R for data analysis. Work on real datasets from Kaggle to build a portfolio.",
+  "Machine Learning": "Study ML fundamentals, supervised/unsupervised learning, and model evaluation. Use scikit-learn and TensorFlow for hands-on practice.",
+  "Statistics": "Review probability, hypothesis testing, regression, and ANOVA. Use Python or R to apply statistical concepts to real data.",
+  "Communication": "Practice technical writing, presentation skills, and documentation. Write blog posts about your learnings and projects.",
+  "Problem Solving": "Solve coding challenges on LeetCode, HackerRank, or CodeSignal. Focus on different algorithm paradigms daily.",
+  "Team Work": "Contribute to open-source projects. Collaborate on GitHub, participate in code reviews, and practice working in team environments.",
+  "Angular": "Learn Angular framework concepts like services, dependency injection, and reactive forms. Build component-based applications.",
+  "Vue.js": "Master Vue.js fundamentals, component lifecycle, and state management with Vuex. Create interactive web applications.",
+  "Node.js": "Learn asynchronous programming, event loops, and npm ecosystem. Build backend servers and APIs with Express or Fastify.",
+  "MongoDB": "Understand NoSQL database concepts. Learn CRUD operations, indexing, and aggregation pipelines in MongoDB.",
+  "Kubernetes": "Study container orchestration with Kubernetes. Learn pods, services, deployments, and practice with Minikube or Docker Desktop.",
+  "Testing": "Learn unit testing, integration testing, and test-driven development. Use Jest, Pytest, or JUnit depending on your tech stack."
+}

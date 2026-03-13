@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Job Roles - AI Resume Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .compare-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .compare-header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .compare-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .compare-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .compare-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .selection-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .job-roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .role-checkbox {
+            display: none;
+        }
+
+        .role-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            min-height: 80px;
+        }
+
+        .role-checkbox:checked + .role-label {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .role-label:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .action-section {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .comparison-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .role-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .role-card.best-match::before {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .best-match-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .role-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .score-display {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .skills-section {
+            margin-top: 15px;
+        }
+
+        .skills-header {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .mini-tag {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .mini-tag.matched {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .mini-tag.missing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(102, 126, 234, 0.2);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .compare-title {
+                font-size: 2rem;
+            }
+
+            .job-roles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .comparison-results {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                margin: 5px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .compare-title {
+                font-size: 1.75rem;
+            }
+
+            .job-roles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .role-label {
+                padding: 10px;
+                font-size: 0.85rem;
+                min-height: 70px;
+            }
+        }
+
+        @media print {
+            .selection-card,
+            .action-section,
+            .btn {
+                display: none;
+            }
+
+            .role-card {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="compare-container">
+        <div class="compare-header">
+            <h1 class="compare-title">🎯 Compare Multiple Job Roles</h1>
+            <p class="compare-subtitle">See which job roles are the best fit for your resume</p>
+        </div>
+
+        <div class="compare-content">
+            <!-- Selection Card -->
+            <div class="selection-card">
+                <h2 style="margin-top: 0; color: #2c3e50;">Select Job Roles to Compare</h2>
+                <p style="color: #7f8c8d; margin-bottom: 20px;">Choose 2 or more job roles to see how well your resume matches each</p>
+                
+                <div class="job-roles-grid" id="rolesGrid">
+                    <!-- Roles will be populated here -->
+                </div>
+
+                <div class="action-section">
+                    <button class="btn btn-primary" onclick="compareSelected()" id="compareBtn" disabled>
+                        Compare Selected Roles
+                    </button>
+                    <a href="/" class="btn btn-secondary">← Back to Analyzer</a>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" style="display: none;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="color: #2c3e50; margin-bottom: 5px;">Comparison Results</h2>
+                    <p style="color: #7f8c8d;">Ranked by resume compatibility</p>
+                </div>
+                <div class="comparison-results" id="resultsContainer">
+                    <!-- Results will be populated here -->
+                </div>
+
+                <div style="text-align: center; margin-top: 40px;">
+                    <button class="btn btn-secondary" onclick="location.reload()">← Compare More Roles</button>
+                    <a href="/" class="btn btn-primary">← Back to Analyzer</a>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing your resume against selected roles...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get job roles passed from Flask template
+        const jobRoles = {{ job_roles | tojson }};
+        const selectedRoles = new Set();
+
+        // Initialize UI
+        initializeRoles();
+
+        function initializeRoles() {
+            const grid = document.getElementById('rolesGrid');
+            grid.innerHTML = '';
+
+            jobRoles.forEach(role => {
+                const roleDisplay = role.replace(/_/g, ' ').split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `role_${role}`;
+                checkbox.className = 'role-checkbox';
+                checkbox.value = role;
+                checkbox.onchange = () => updateSelection();
+
+                const label = document.createElement('label');
+                label.htmlFor = `role_${role}`;
+                label.className = 'role-label';
+                label.textContent = roleDisplay;
+
+                const container = document.createElement('div');
+                container.style.position = 'relative';
+                container.appendChild(checkbox);
+                container.appendChild(label);
+
+                grid.appendChild(container);
+            });
+        }
+
+        function updateSelection() {
+            selectedRoles.clear();
+            document.querySelectorAll('.role-checkbox:checked').forEach(checkbox => {
+                selectedRoles.add(checkbox.value);
+            });
+
+            // Enable compare button if 2+ selected
+            document.getElementById('compareBtn').disabled = selectedRoles.size < 2;
+        }
+
+        async function compareSelected() {
+            if (selectedRoles.size < 2) {
+                alert('Please select at least 2 job roles to compare');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/compare-roles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resume_file: getResumeFile(),  // This would need to be passed from context
+                        job_roles: Array.from(selectedRoles)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data.comparison, data.best_match);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error comparing roles: ' + error.message);
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        function displayResults(comparison, bestMatch) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            comparison.forEach(result => {
+                const isBestMatch = result.role === bestMatch;
+                const card = document.createElement('div');
+                card.className = `role-card ${isBestMatch ? 'best-match' : ''}`;
+
+                card.innerHTML = `
+                    ${isBestMatch ? '<div class="best-match-badge">🏆 Best Match</div>' : ''}
+                    <div class="role-name">${result.role}</div>
+                    
+                    <div class="score-display">
+                        <div class="score-label">Resume Score</div>
+                        <div class="score-value">${result.resume_score}</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="score-display" style="margin: 0;">
+                            <div class="score-label">Skill Match</div>
+                            <div class="score-value" style="font-size: 1.5rem;">${result.skill_match}%</div>
+                        </div>
+                        <div class="score-display" style="margin: 0;">
+                            <div class="score-label">ATS Score</div>
+                            <div class="score-value" style="font-size: 1.5rem;">${result.ats_score}</div>
+                        </div>
+                    </div>
+
+                    <div class="skills-section">
+                        <div class="skills-header">✓ Top Matched Skills</div>
+                        <div class="skill-list">
+                            ${result.matched_skills.map(s => `<span class="mini-tag matched">${s}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="skills-section">
+                        <div class="skills-header">✗ Key Missing Skills</div>
+                        <div class="skill-list">
+                            ${result.missing_skills.map(s => `<span class="mini-tag missing">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function getResumeFile() {
+            // This would typically come from URL params or session storage
+            // For now, returning a placeholder
+            return localStorage.getItem('currentResumeFile') || '';
+        }
+    </script>
+</body>
+</html>

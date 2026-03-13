@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Homepage specific styles */
+        .homepage-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .homepage-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 50px 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .homepage-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .homepage-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .form-section {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+
+        .upload-area {
+            position: relative;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .upload-subtext {
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        .file-name {
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .file-name.active {
+            display: block;
+        }
+
+        textarea {
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            padding: 12px;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-analyze:active {
+            transform: translateY(0);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background-color: rgba(39, 174, 96, 0.1);
+            border: 1px solid #27ae60;
+            color: #27ae60;
+        }
+
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+            .homepage-card {
+                padding: 30px 20px;
+            }
+
+            .homepage-title {
+                font-size: 2rem;
+            }
+
+            .homepage-subtitle {
+                font-size: 1rem;
+            }
+
+            .features-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="homepage-container">
+        <div class="homepage-card">
+            <h1 class="homepage-title">AI Resume Analyzer</h1>
+            <p class="homepage-subtitle">Get instant feedback on your resume's match with job requirements</p>
+
+            <form id="analyzeForm" class="form-section">
+                <!-- Alert messages -->
+                <div id="successAlert" class="alert alert-success"></div>
+                <div id="errorAlert" class="alert alert-error"></div>
+
+                <!-- Resume Upload -->
+                <div class="form-group">
+                    <label for="resumeFile">Upload Your Resume</label>
+                    <div class="upload-area" onclick="document.getElementById('resumeFile').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Click to upload or drag and drop</div>
+                        <div class="upload-subtext">PDF or DOCX (Max 5MB)</div>
+                        <div class="file-name" id="fileName"></div>
+                        <input type="file" id="resumeFile" name="resume" accept=".pdf,.docx,.doc" required>
+                    </div>
+                </div>
+
+                <!-- Job Description -->
+                <div class="form-group">
+                    <label for="jobDescription">Job Description</label>
+                    <textarea 
+                        id="jobDescription" 
+                        name="job_description" 
+                        placeholder="Paste the job description here..."
+                        required></textarea>
+                </div>
+
+                <!-- Analyze Button -->
+                <button type="submit" class="btn-analyze" id="analyzeBtn">
+                    <span id="btnText">Analyze Resume</span>
+                    <span id="btnSpinner" class="loading-spinner" style="display: none;"></span>
+                </button>
+
+                <!-- Compare Roles Link -->
+                <a href="/compare" style="display: block; margin-top: 15px; padding: 12px; background: white; border: 2px solid #667eea; color: #667eea; text-align: center; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.background='#667eea'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#667eea';">
+                    🎯 Compare Job Roles
+                </a>
+            </form>
+
+            <!-- Features List -->
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🔑</div>
+                    <div class="feature-text">Keyword Detection</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">Visual Charts</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💡</div>
+                    <div class="feature-text">Smart Tips</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚖️</div>
+                    <div class="feature-text">Role Comparison</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📥</div>
+                    <div class="feature-text">Download Reports</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">AI Analysis</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-text">Instant Results</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('analyzeForm');
+        const resumeFile = document.getElementById('resumeFile');
+        const fileName = document.getElementById('fileName');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const uploadArea = document.querySelector('.upload-area');
+
+        // Handle file selection
+        resumeFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = '✓ ' + file.name;
+                fileName.classList.add('active');
+                
+                // Validate file size
+                if (file.size > 5 * 1024 * 1024) {
+                    showError('File size exceeds 5MB limit');
+                    resumeFile.value = '';
+                    fileName.classList.remove('active');
+                }
+            }
+        });
+
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#764ba2';
+            uploadArea.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05))';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05))';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                resumeFile.files = files;
+                const file = files[0];
+                fileName.textContent = '✓ ' + file.name;
+                fileName.classList.add('active');
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            clearAlerts();
+
+            // Validate inputs
+            if (!resumeFile.files[0]) {
+                showError('Please select a resume file');
+                return;
+            }
+
+            if (!document.getElementById('jobDescription').value.trim()) {
+                showError('Please enter a job description');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'inline-block';
+
+            try {
+                const formData = new FormData();
+                formData.append('resume', resumeFile.files[0]);
+                formData.append('job_description', document.getElementById('jobDescription').value);
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                // Success - redirect to results
+                showSuccess('Analysis complete! Redirecting to results...');
+                setTimeout(() => {
+                    window.location.href = '/result/' + data.filename;
+                }, 1500);
+
+            } catch (error) {
+                showError(error.message || 'An error occurred');
+                analyzeBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnSpinner.style.display = 'none';
+            }
+        });
+
+        function showSuccess(message) {
+            successAlert.textContent = '✓ ' + message;
+            successAlert.classList.add('show');
+        }
+
+        function showError(message) {
+            errorAlert.textContent = '✗ ' + message;
+            errorAlert.classList.add('show');
+        }
+
+        function clearAlerts() {
+            successAlert.classList.remove('show');
+            errorAlert.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
+

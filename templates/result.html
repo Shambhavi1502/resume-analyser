@@ -1,0 +1,1952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - AI Resume Analyzer</title>
+    <!-- Link CSS file from Flask static folder using url_for -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js library for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <style>
+        /* Page-specific styles for results dashboard */
+        .results-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .results-header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .results-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Score Cards */
+        .score-card {
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .score-circle.resume-score {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .score-circle.ats-score {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .score-circle.skill-score {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .score-unit {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .score-label {
+            font-size: 1.15rem;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .score-description {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        /* Suitability Card */
+        .suitability-card {
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .suitability-status {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .suitability-message {
+            font-size: 1rem;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        /* Skills Section */
+        .skills-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .skill-tag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .skill-matched {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .skill-missing {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            color: #667eea;
+            border: 1px solid #667eea;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        /* Tips and Suggestions */
+        .suggestions-card {
+            grid-column: 1 / -1;
+        }
+
+        .tip-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .tip-number {
+            min-width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .tip-content {
+            flex: 1;
+        }
+
+        .tip-title {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .tip-desc {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+
+        .tip-impact {
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #ffcccc;
+            color: #cc0000;
+        }
+
+        .priority-medium {
+            background: #ffffcc;
+            color: #cc8800;
+        }
+
+        .priority-low {
+            background: #ccffcc;
+            color: #008800;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        /* Back Button */
+        .back-button {
+            max-width: 1200px;
+            margin: 30px auto 0;
+        }
+
+        .back-button .btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .results-title {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .suggestions-card {
+                grid-column: 1;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .score-circle {
+                width: 110px;
+                height: 110px;
+            }
+
+            .score-value {
+                font-size: 2.2rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-title {
+                font-size: 1.5rem;
+            }
+
+            .results-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .score-circle {
+                width: 90px;
+                height: 90px;
+            }
+
+            .score-value {
+                font-size: 1.8rem;
+            }
+
+            .score-unit {
+                font-size: 1rem;
+            }
+        }
+
+        @media print {
+            .action-buttons,
+            .back-button {
+                display: none;
+            }
+
+            .results-container {
+                background: white;
+            }
+
+            .card {
+                page-break-inside: avoid;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <!-- Header Section -->
+        <div class="results-header">
+            <h1 class="results-title">📊 Resume Analysis Results</h1>
+            <p class="results-subtitle">Your comprehensive AI-powered resume evaluation report</p>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="downloadReport()">📥 Download Report</button>
+                <button class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
+                <a href="/" class="btn btn-secondary">← Try Another Resume</a>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Resume Score Card -->
+            <div class="card score-card">
+                <div class="score-circle resume-score">
+                    <span class="score-value" id="resumeScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Resume Score</div>
+                <div class="score-description">Overall match with job requirements</div>
+            </div>
+
+            <!-- ATS Score Card -->
+            <div class="card score-card">
+                <div class="score-circle ats-score">
+                    <span class="score-value" id="atsScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">ATS Score</div>
+                <div class="score-description">Compatibility with tracking systems</div>
+            </div>
+
+            <!-- Skill Match Card -->
+            <div class="card score-card">
+                <div class="score-circle skill-score">
+                    <span class="score-value" id="skillMatch">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Skill Match</div>
+                <div class="score-description">Required skills found</div>
+            </div>
+
+            <!-- Job Suitability Card -->
+            <div class="card suitability-card">
+                <div class="suitability-status" id="suitabilityStatus">Loading...</div>
+                <div class="suitability-message" id="suitabilityMessage">
+                    Analyzing your resume match with job requirements...
+                </div>
+            </div>
+
+            <!-- Skill Match Visualization -->
+            <div class="card card-full">
+                <h3 class="skills-title">📈 Skill Match Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="skillChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ATS Components Visualization -->
+            <div class="card card-full">
+                <h3 class="skills-title">⚙️ ATS Score Components</h3>
+                <div class="chart-container">
+                    <canvas id="atsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Keywords Found -->
+            <div class="card card-full">
+                <h3 class="skills-title">🔑 Key Keywords Detected</h3>
+                <div class="skills-list" id="keywordsList">
+                    <div class="empty-state">Loading keywords...</div>
+                </div>
+            </div>
+
+            <!-- Matched Skills Card -->
+            <div class="card">
+                <h3 class="skills-title">✓ Matched Skills</h3>
+                <div class="skills-list" id="matchedSkillsList">
+                    <div class="empty-state">No skills matched</div>
+                </div>
+            </div>
+
+            <!-- Missing Skills Card -->
+            <div class="card">
+                <h3 class="skills-title">✗ Missing Skills</h3>
+                <div class="skills-list" id="missingSkillsList">
+                    <div class="empty-state">All required skills present!</div>
+                </div>
+            </div>
+
+            <!-- Improvement Tips Card -->
+            <div class="card suggestions-card">
+                <h3 class="skills-title">💡 Improvement Tips</h3>
+                <div id="tipsList">
+                    <div class="empty-state">Loading tips...</div>
+                </div>
+            </div>
+
+            <!-- Suggestions Card -->
+            <div class="card suggestions-card">
+                <h3 class="skills-title">🎯 Recommendations</h3>
+                <ul class="suggestions-list" id="suggestionsList" style="list-style: none; padding: 0; margin: 0;">
+                    <li class="tip-item">
+                        <div class="tip-number">•</div>
+                        <div class="tip-content">
+                            <div class="tip-desc">Loading recommendations...</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="/" class="btn btn-primary">← Back to Analyzer</a>
+        </div>
+    </div>
+
+    <script>
+        // Get results data from Flask template
+        const result = {{ result | tojson }};
+        let skillChart = null;
+        let atsChart = null;
+
+        // Display all results on page load
+        displayResults(result);
+
+        /**
+         * Display all results from the analysis
+         */
+        function displayResults(result) {
+            // Update score displays
+            document.getElementById('resumeScore').textContent = Math.round(result.resume_score || 0);
+            document.getElementById('atsScore').textContent = Math.round(result.ats_score || 0);
+            
+            // Calculate skill match percentage
+            const matched = (result.matched_skills || []).length;
+            const total = matched + (result.missing_skills || []).length;
+            const skillMatchPercent = total > 0 ? Math.round((matched / total) * 100) : 0;
+            document.getElementById('skillMatch').textContent = skillMatchPercent;
+
+            // Update suitability status
+            document.getElementById('suitabilityStatus').textContent = result.suitability || 'Unknown';
+            document.getElementById('suitabilityMessage').textContent = 
+                `Based on skill match (${skillMatchPercent}%) and ATS compatibility (${Math.round(result.ats_score || 0)}%)`;
+
+            // Display matched skills
+            const matchedContainer = document.getElementById('matchedSkillsList');
+            if (result.matched_skills && result.matched_skills.length > 0) {
+                matchedContainer.innerHTML = result.matched_skills
+                    .map(skill => `<span class="skill-tag skill-matched">✓ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display missing skills
+            const missingContainer = document.getElementById('missingSkillsList');
+            if (result.missing_skills && result.missing_skills.length > 0) {
+                missingContainer.innerHTML = result.missing_skills
+                    .map(skill => `<span class="skill-tag skill-missing">✗ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display keywords
+            const keywordsContainer = document.getElementById('keywordsList');
+            if (result.keywords && result.keywords.length > 0) {
+                keywordsContainer.innerHTML = result.keywords
+                    .map(keyword => `<span class="keyword-tag">${keyword}</span>`)
+                    .join('');
+            }
+
+            // Display improvement tips
+            const tipsContainer = document.getElementById('tipsList');
+            if (result.improvement_tips && result.improvement_tips.length > 0) {
+                tipsContainer.innerHTML = result.improvement_tips
+                    .map((tip, index) => `
+                        <div class="tip-item">
+                            <div class="tip-number">${index + 1}</div>
+                            <div class="tip-content">
+                                <div class="tip-title">
+                                    ${tip.title}
+                                    <span class="priority-badge priority-${tip.priority}">${tip.priority}</span>
+                                </div>
+                                <div class="tip-desc">${tip.description}</div>
+                                <div class="tip-impact">💡 ${tip.impact}</div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            // Display suggestions
+            const suggestionsList = document.getElementById('suggestionsList');
+            if (result.suggestions && result.suggestions.length > 0) {
+                suggestionsList.innerHTML = result.suggestions
+                    .map((suggestion, index) => `
+                        <li class="tip-item">
+                            <div class="tip-number">${index + 1}</div>
+                            <div class="tip-content">
+                                <div class="tip-desc">${suggestion}</div>
+                            </div>
+                        </li>
+                    `)
+                    .join('');
+            }
+
+            // Create visualization charts
+            if (result.chart_data) {
+                createSkillChart(result.chart_data);
+                createAtsChart(result.chart_data);
+            }
+        }
+
+        /**
+         * Create skill match breakdown bar chart
+         */
+        function createSkillChart(chartData) {
+            const ctx = document.getElementById('skillChart');
+            if (!ctx) return;
+
+            const data = chartData.skill_breakdown || {};
+            const matchedCount = data.matched || 0;
+            const missingCount = data.missing || 0;
+            const total = matchedCount + missingCount;
+            
+            skillChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Matched Skills', 'Missing Skills'],
+                    datasets: [{
+                        label: 'Number of Skills',
+                        data: [matchedCount, missingCount],
+                        backgroundColor: [
+                            'rgba(39, 174, 96, 0.8)',
+                            'rgba(231, 76, 60, 0.8)'
+                        ],
+                        borderColor: [
+                            '#27ae60',
+                            '#e74c3c'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { padding: 20, font: { size: 13, weight: 'bold' } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: Math.max(matchedCount, missingCount) + 2,
+                            ticks: { 
+                                font: { size: 12 },
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Count',
+                                font: { size: 13, weight: 'bold' }
+                            }
+                        },
+                        y: {
+                            ticks: { 
+                                font: { size: 13, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Create ATS components breakdown chart
+         */
+        function createAtsChart(chartData) {
+            const ctx = document.getElementById('atsChart');
+            if (!ctx) return;
+
+            const components = chartData.ats_components || {};
+            atsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Length', 'Sections', 'Keywords', 'Contact'],
+                    datasets: [{
+                        label: 'Score (0-25)',
+                        data: [
+                            components.length || 0,
+                            components.sections || 0,
+                            components.keywords || 0,
+                            components.contact || 0
+                        ],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c'
+                        ],
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            max: 25,
+                            beginAtZero: true,
+                            ticks: { font: { size: 12 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 12, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * Download analysis report as HTML file
+         */
+        function downloadReport() {
+            const reportName = result.filename || 'resume_analysis';
+            const htmlReport = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Resume Analysis Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+                        h2 { color: #764ba2; margin-top: 20px; }
+                        .score { font-size: 28px; font-weight: bold; color: #667eea; }
+                        .section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+                        .skill { padding: 6px 12px; margin: 4px; display: inline-block; border-radius: 20px; }
+                        .matched { background: #d4edda; color: #155724; }
+                        .missing { background: #f8d7da; color: #721c24; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📊 Resume Analysis Report</h1>
+                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    
+                    <h2>Overall Scores</h2>
+                    <div class="section">
+                        <p><strong>Resume Score:</strong> <span class="score">${result.resume_score}/100</span></p>
+                        <p><strong>ATS Score:</strong> <span class="score">${result.ats_score}/100</span></p>
+                        <p><strong>Skill Match:</strong> <span class="score">${result.skill_match_percentage}%</span></p>
+                        <p><strong>Suitability:</strong> ${result.suitability}</p>
+                    </div>
+                    
+                    <h2>Matched Skills</h2>
+                    <div class="section">
+                        ${result.matched_skills.map(s => `<span class="skill matched">✓ ${s}</span>`).join('')}
+                    </div>
+                    
+                    <h2>Missing Skills</h2>
+                    <div class="section">
+                        ${result.missing_skills.map(s => `<span class="skill missing">✗ ${s}</span>`).join('')}
+                    </div>
+                    
+                    <h2>Improvement Tips</h2>
+                    <div class="section">
+                        ${result.improvement_tips.map(t => `<p><strong>${t.title}</strong> [${t.priority.toUpperCase()}]<br>${t.description}</p>`).join('')}
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlReport], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${reportName}_analysis.html`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
+    <style>
+        /* Results page specific styles */
+        .results-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .results-header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .results-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .dashboard-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-full {
+            grid-column: 1 / -1;
+        }
+
+        .score-card {
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-weight: 700;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .score-circle.resume-score {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .score-circle.ats-score {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .score-circle.suitability-score {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .score-unit {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .score-label {
+            font-size: 1.15rem;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .score-description {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .suitability-card {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .suitability-status {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .suitability-message {
+            font-size: 1rem;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        .skills-card {
+            grid-column: auto;
+        }
+
+        .skills-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .skill-tag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .skill-matched {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .skill-missing {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 4px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            color: #667eea;
+            border: 1px solid #667eea;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .suggestions-card {
+            grid-column: 1 / -1;
+        }
+
+        .tip-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .tip-number {
+            min-width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .tip-content {
+            flex: 1;
+        }
+
+        .tip-title {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .tip-desc {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+
+        .tip-impact {
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #ffcccc;
+            color: #cc0000;
+        }
+
+        .priority-medium {
+            background: #ffffcc;
+            color: #cc8800;
+        }
+
+        .priority-low {
+            background: #ccffcc;
+            color: #008800;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .back-button {
+            max-width: 1200px;
+            margin: 30px auto 0;
+        }
+
+        @media (max-width: 768px) {
+            .results-title {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .suggestions-card {
+                grid-column: 1;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .score-circle {
+                width: 110px;
+                height: 110px;
+            }
+
+            .score-value {
+                font-size: 2.2rem;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <!-- Header -->
+        <div class="results-header">
+            <h1 class="results-title">📊 Resume Analysis Results</h1>
+            <p class="results-subtitle">Your comprehensive AI-powered resume evaluation</p>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="downloadReport()">📥 Download Report</button>
+                <button class="btn btn-primary" onclick="window.print()">🖨️ Print Report</button>
+                <a href="/" class="btn btn-secondary">← Try Another Resume</a>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Resume Score Card -->
+            <div class="card score-card">
+                <div class="score-circle resume-score">
+                    <span class="score-value" id="resumeScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Resume Score</div>
+                <div class="score-description">Overall match with job requirements</div>
+            </div>
+
+            <!-- ATS Score Card -->
+            <div class="card score-card">
+                <div class="score-circle ats-score">
+                    <span class="score-value" id="atsScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">ATS Score</div>
+                <div class="score-description">Compatibility with tracking systems</div>
+            </div>
+
+            <!-- Skill Match Card -->
+            <div class="card score-card">
+                <div class="score-circle suitability-score">
+                    <span class="score-value" id="skillMatch">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Skill Match</div>
+                <div class="score-description">Required skills found</div>
+            </div>
+
+            <!-- Job Suitability Card -->
+            <div class="card suitability-card">
+                <div class="suitability-status" id="suitabilityStatus">Loading...</div>
+                <div class="suitability-message" id="suitabilityMessage">
+                    Analyzing your resume match with the job requirements...
+                </div>
+            </div>
+
+            <!-- Skill Match Visualization -->
+            <div class="card card-full">
+                <h3 class="skills-title">📈 Skill Match Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="skillChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ATS Components Visualization -->
+            <div class="card card-full">
+                <h3 class="skills-title">⚙️ ATS Score Components</h3>
+                <div class="chart-container">
+                    <canvas id="atsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Keywords Found -->
+            <div class="card card-full">
+                <h3 class="skills-title">🔑 Key Keywords Detected</h3>
+                <div class="skills-list" id="keywordsList">
+                    <div class="empty-state">Loading keywords...</div>
+                </div>
+            </div>
+
+            <!-- Matched Skills Card -->
+            <div class="card skills-card">
+                <div class="skills-title">✓ Matched Skills</div>
+                <div class="skills-list" id="matchedSkillsList">
+                    <div class="empty-state">No skills matched</div>
+                </div>
+            </div>
+
+            <!-- Missing Skills Card -->
+            <div class="card skills-card">
+                <div class="skills-title">✗ Missing Skills</div>
+                <div class="skills-list" id="missingSkillsList">
+                    <div class="empty-state">All required skills present!</div>
+                </div>
+            </div>
+
+            <!-- Improvement Tips Card -->
+            <div class="card suggestions-card">
+                <div class="skills-title">💡 Improvement Tips</div>
+                <div id="tipsList">
+                    <div class="empty-state">Loading tips...</div>
+                </div>
+            </div>
+
+            <!-- Suggestions Card -->
+            <div class="card suggestions-card">
+                <div class="skills-title">🎯 Recommendations</div>
+                <ul class="suggestions-list" id="suggestionsList">
+                    <li class="tip-item">
+                        <div class="tip-number">•</div>
+                        <div class="tip-content">
+                            <div class="tip-desc">Loading recommendations...</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="/" class="btn btn-primary" style="width: 100%; text-align: center;">
+                ← Back to Analyzer
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Get results data from template
+        const result = {{ result | tojson }};
+        let skillChart = null;
+        let atsChart = null;
+
+        // Display all results
+        displayResults(result);
+
+        function displayResults(result) {
+            // Update scores
+            document.getElementById('resumeScore').textContent = Math.round(result.resume_score || 0);
+            document.getElementById('atsScore').textContent = Math.round(result.ats_score || 0);
+            
+            // Calculate skill match percentage
+            const matched = (result.matched_skills || []).length;
+            const total = matched + (result.missing_skills || []).length;
+            const skillMatchPercent = total > 0 ? Math.round((matched / total) * 100) : 0;
+            document.getElementById('skillMatch').textContent = skillMatchPercent;
+
+            // Update suitability status
+            document.getElementById('suitabilityStatus').textContent = result.suitability || 'Unknown';
+            document.getElementById('suitabilityMessage').textContent = 
+                `Based on skill match (${skillMatchPercent}%) and ATS compatibility (${Math.round(result.ats_score || 0)}%)`;
+
+            // Display matched skills
+            const matchedContainer = document.getElementById('matchedSkillsList');
+            if (result.matched_skills && result.matched_skills.length > 0) {
+                matchedContainer.innerHTML = result.matched_skills
+                    .map(skill => `<span class="skill-tag skill-matched">✓ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display missing skills
+            const missingContainer = document.getElementById('missingSkillsList');
+            if (result.missing_skills && result.missing_skills.length > 0) {
+                missingContainer.innerHTML = result.missing_skills
+                    .map(skill => `<span class="skill-tag skill-missing">✗ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display keywords
+            const keywordsContainer = document.getElementById('keywordsList');
+            if (result.keywords && result.keywords.length > 0) {
+                keywordsContainer.innerHTML = result.keywords
+                    .map(keyword => `<span class="keyword-tag">${keyword}</span>`)
+                    .join('');
+            }
+
+            // Display improvement tips
+            const tipsContainer = document.getElementById('tipsList');
+            if (result.improvement_tips && result.improvement_tips.length > 0) {
+                tipsContainer.innerHTML = result.improvement_tips
+                    .map((tip, index) => `
+                        <div class="tip-item">
+                            <div class="tip-number">${index + 1}</div>
+                            <div class="tip-content">
+                                <div class="tip-title">
+                                    ${tip.title}
+                                    <span class="priority-badge priority-${tip.priority}">${tip.priority}</span>
+                                </div>
+                                <div class="tip-desc">${tip.description}</div>
+                                <div class="tip-impact">💡 ${tip.impact}</div>
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            // Display suggestions
+            const suggestionsList = document.getElementById('suggestionsList');
+            if (result.suggestions && result.suggestions.length > 0) {
+                suggestionsList.innerHTML = result.suggestions
+                    .map((suggestion, index) => `
+                        <li class="tip-item">
+                            <div class="tip-number">${index + 1}</div>
+                            <div class="tip-content">
+                                <div class="tip-desc">${suggestion}</div>
+                            </div>
+                        </li>
+                    `)
+                    .join('');
+            }
+
+            // Create skill match chart
+            if (result.chart_data) {
+                createSkillChart(result.chart_data);
+                createAtsChart(result.chart_data);
+            }
+        }
+
+        function createSkillChart(chartData) {
+            const ctx = document.getElementById('skillChart');
+            if (!ctx) return;
+
+            const data = chartData.skill_breakdown || {};
+            skillChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Matched Skills', 'Missing Skills'],
+                    datasets: [{
+                        data: [data.matched || 0, data.missing || 0],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderColor: ['#229954', '#cb2c2c'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 20, font: { size: 14, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAtsChart(chartData) {
+            const ctx = document.getElementById('atsChart');
+            if (!ctx) return;
+
+            const components = chartData.ats_components || {};
+            atsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Length', 'Sections', 'Keywords', 'Contact'],
+                    datasets: [{
+                        label: 'Score (0-25)',
+                        data: [
+                            components.length || 0,
+                            components.sections || 0,
+                            components.keywords || 0,
+                            components.contact || 0
+                        ],
+                        backgroundColor: [
+                            '#667eea',
+                            '#764ba2',
+                            '#f093fb',
+                            '#f5576c'
+                        ],
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            max: 25,
+                            beginAtZero: true,
+                            ticks: { font: { size: 12 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 12, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function downloadReport() {
+            const reportName = result.filename || 'resume_analysis';
+            const htmlReport = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Resume Analysis Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+                        h1 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; }
+                        h2 { color: #764ba2; margin-top: 20px; }
+                        .score { font-size: 28px; font-weight: bold; color: #667eea; }
+                        .section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+                        .skill { padding: 6px 12px; margin: 4px; display: inline-block; border-radius: 20px; }
+                        .matched { background: #d4edda; color: #155724; }
+                        .missing { background: #f8d7da; color: #721c24; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📊 Resume Analysis Report</h1>
+                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    
+                    <h2>Overall Scores</h2>
+                    <div class="section">
+                        <p><strong>Resume Score:</strong> <span class="score">${result.resume_score}/100</span></p>
+                        <p><strong>ATS Score:</strong> <span class="score">${result.ats_score}/100</span></p>
+                        <p><strong>Skill Match:</strong> <span class="score">${result.skill_match_percentage}%</span></p>
+                        <p><strong>Suitability:</strong> ${result.suitability}</p>
+                    </div>
+                    
+                    <h2>Matched Skills</h2>
+                    <div class="section">
+                        ${result.matched_skills.map(s => `<span class="skill matched">✓ ${s}</span>`).join('')}
+                    </div>
+                    
+                    <h2>Missing Skills</h2>
+                    <div class="section">
+                        ${result.missing_skills.map(s => `<span class="skill missing">✗ ${s}</span>`).join('')}
+                    </div>
+                    
+                    <h2>Improvement Tips</h2>
+                    <div class="section">
+                        ${result.improvement_tips.map(t => `<p><strong>${t.title}</strong> [${t.priority.toUpperCase()}]<br>${t.description}</p>`).join('')}
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlReport], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${reportName}_analysis.html`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
+        /* Results page specific styles */
+        .results-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .results-header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .results-subtitle {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .dashboard-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .score-card {
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .score-circle.resume-score {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .score-circle.ats-score {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .score-circle.suitability-score {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .score-value {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .score-unit {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .score-label {
+            font-size: 1.15rem;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .score-description {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .suitability-card {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .suitability-status {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .suitability-message {
+            font-size: 1rem;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        .skills-card {
+            grid-column: auto;
+        }
+
+        .skills-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .skill-tag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .skill-matched {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .skill-missing {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .suggestions-card {
+            grid-column: 1 / -1;
+        }
+
+        .suggestions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .suggestion-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .suggestion-number {
+            min-width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .suggestion-text {
+            color: #2c3e50;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .back-button {
+            max-width: 1200px;
+            margin: 30px auto 0;
+        }
+
+        @media (max-width: 768px) {
+            .results-title {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .suggestions-card {
+                grid-column: 1;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .score-circle {
+                width: 110px;
+                height: 110px;
+            }
+
+            .score-value {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <!-- Header -->
+        <div class="results-header">
+            <h1 class="results-title">Resume Analysis Results</h1>
+            <p class="results-subtitle">Your comprehensive resume evaluation report</p>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="window.print()">📥 Print Report</button>
+                <a href="/" class="btn btn-secondary">← Try Another Resume</a>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Resume Score Card -->
+            <div class="card score-card">
+                <div class="score-circle resume-score">
+                    <span class="score-value" id="resumeScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Resume Score</div>
+                <div class="score-description">Overall match with job requirements</div>
+            </div>
+
+            <!-- ATS Score Card -->
+            <div class="card score-card">
+                <div class="score-circle ats-score">
+                    <span class="score-value" id="atsScore">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">ATS Score</div>
+                <div class="score-description">Compatibility with tracking systems</div>
+            </div>
+
+            <!-- Skill Match Card -->
+            <div class="card score-card">
+                <div class="score-circle suitability-score">
+                    <span class="score-value" id="skillMatch">--</span>
+                    <span class="score-unit">%</span>
+                </div>
+                <div class="score-label">Skill Match</div>
+                <div class="score-description">Job required skills found</div>
+            </div>
+
+            <!-- Job Suitability Card -->
+            <div class="card suitability-card">
+                <div class="suitability-status" id="suitabilityStatus">Loading...</div>
+                <div class="suitability-message" id="suitabilityMessage">
+                    Analyzing your resume match with the job requirements...
+                </div>
+            </div>
+
+            <!-- Matched Skills Card -->
+            <div class="card skills-card">
+                <div class="skills-title">✓ Matched Skills</div>
+                <div class="skills-list" id="matchedSkillsList">
+                    <div class="empty-state">No skills matched</div>
+                </div>
+            </div>
+
+            <!-- Missing Skills Card -->
+            <div class="card skills-card">
+                <div class="skills-title">✗ Missing Skills</div>
+                <div class="skills-list" id="missingSkillsList">
+                    <div class="empty-state">All required skills present!</div>
+                </div>
+            </div>
+
+            <!-- Suggestions Card -->
+            <div class="card suggestions-card">
+                <div class="skills-title">💡 Improvement Suggestions</div>
+                <ul class="suggestions-list" id="suggestionsList">
+                    <li class="suggestion-item">
+                        <div class="suggestion-number">1</div>
+                        <div class="suggestion-text">Loading suggestions...</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="/" class="btn btn-primary" style="width: 100%; text-align: center;">
+                ← Back to Analyzer
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Get results data from template
+        const result = {{ result | tojson }};
+
+        // Display all results
+        displayResults(result);
+
+        function displayResults(result) {
+            // Update scores
+            document.getElementById('resumeScore').textContent = Math.round(result.resume_score || 0);
+            document.getElementById('atsScore').textContent = Math.round(result.ats_score || 0);
+            
+            // Calculate skill match percentage
+            const matched = (result.matched_skills || []).length;
+            const total = matched + (result.missing_skills || []).length;
+            const skillMatchPercent = total > 0 ? Math.round((matched / total) * 100) : 0;
+            document.getElementById('skillMatch').textContent = skillMatchPercent;
+
+            // Update suitability status
+            document.getElementById('suitabilityStatus').textContent = result.suitability || 'Unknown';
+            document.getElementById('suitabilityMessage').textContent = 
+                `Based on skill match (${skillMatchPercent}%) and ATS compatibility (${Math.round(result.ats_score || 0)}%)`;
+
+            // Display matched skills
+            const matchedContainer = document.getElementById('matchedSkillsList');
+            if (result.matched_skills && result.matched_skills.length > 0) {
+                matchedContainer.innerHTML = result.matched_skills
+                    .map(skill => `<span class="skill-tag skill-matched">✓ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display missing skills
+            const missingContainer = document.getElementById('missingSkillsList');
+            if (result.missing_skills && result.missing_skills.length > 0) {
+                missingContainer.innerHTML = result.missing_skills
+                    .map(skill => `<span class="skill-tag skill-missing">✗ ${skill}</span>`)
+                    .join('');
+            }
+
+            // Display suggestions
+            const suggestionsList = document.getElementById('suggestionsList');
+            if (result.suggestions && result.suggestions.length > 0) {
+                suggestionsList.innerHTML = result.suggestions
+                    .map((suggestion, index) => `
+                        <li class="suggestion-item">
+                            <div class="suggestion-number">${index + 1}</div>
+                            <div class="suggestion-text">${suggestion}</div>
+                        </li>
+                    `)
+                    .join('');
+            }
+        }
+    </script>
+</body>
+</html>
+

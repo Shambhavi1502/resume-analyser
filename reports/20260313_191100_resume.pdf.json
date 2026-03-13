@@ -1,0 +1,76 @@
+{
+  "filename": "20260313_191100_resume.pdf",
+  "resume_score": 21.6,
+  "ats_score": 37.34,
+  "skill_match_percentage": 11.11,
+  "suitability": "Poor - Not Very Suitable",
+  "status_color": "danger",
+  "matched_skills": [
+    "R"
+  ],
+  "missing_skills": [
+    "MongoDB",
+    "CSS",
+    "Java",
+    "JavaScript",
+    "Go",
+    "HTML",
+    "React",
+    "Node.js"
+  ],
+  "suggestions": [
+    "Learn the following skills: MongoDB, CSS, Java",
+    "Expand your resume - it should be at least 200 words",
+    "Add missing sections: experience"
+  ],
+  "keywords": [
+    "Created",
+    "Built",
+    "Analyzed"
+  ],
+  "improvement_tips": [
+    {
+      "priority": "high",
+      "title": "Add More Action Verbs",
+      "description": "Include action verbs like \"developed\", \"managed\", \"led\" to make your achievements stand out.",
+      "impact": "Improves ATS score by up to 15%"
+    },
+    {
+      "priority": "high",
+      "title": "Add Missing Resume Sections",
+      "description": "Add these sections: Experience",
+      "impact": "Improves ATS score by up to 20%"
+    },
+    {
+      "priority": "medium",
+      "title": "Learn High-Demand Skills",
+      "description": "Focus on: MongoDB, CSS, Java. These are crucial for your target role.",
+      "impact": "Can increase job match by up to 30%"
+    },
+    {
+      "priority": "medium",
+      "title": "Expand Your Resume",
+      "description": "Add more details about your accomplishments, projects, and responsibilities.",
+      "impact": "Improves readability and ATS compatibility"
+    }
+  ],
+  "chart_data": {
+    "skill_breakdown": {
+      "matched": 1,
+      "missing": 8
+    },
+    "score_breakdown": {
+      "skill_match": 11.1,
+      "ats": 37.3,
+      "resume": 21.6
+    },
+    "ats_components": {
+      "length": 43.0,
+      "sections": 75.0,
+      "keywords": 30.0,
+      "contact": 60
+    }
+  },
+  "word_count": 172,
+  "timestamp": "2026-03-13T19:11:01.042748"
+}
